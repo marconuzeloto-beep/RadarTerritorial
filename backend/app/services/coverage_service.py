@@ -1,3 +1,4 @@
+import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.municipio_repository import MunicipioRepository
 
@@ -58,4 +59,59 @@ class CoverageService:
             "not_found": not_found,
             "analyzed_count": len(covered_cities),
             "discovered_count": len(discovered_cities),
+        }
+
+    async def analyze_polygon(self, cities: list[str], buffer_km: float) -> dict:
+        found = await self.repo.find_by_names(cities)
+
+        not_found = []
+        found_names_normalized = {
+            MunicipioRepository._normalize(m["nome"]) for m in found
+        }
+        for city in cities:
+            if MunicipioRepository._normalize(city) not in found_names_normalized:
+                not_found.append(city)
+
+        if not found:
+            return {
+                "polygon_geojson": None,
+                "polygon_area_km2": 0.0,
+                "origin_cities": [],
+                "cities_found": [],
+                "not_found": not_found,
+            }
+
+        source_ids = [m["id"] for m in found]
+        data = await self.repo.build_polygon_and_find_cities(source_ids, buffer_km)
+
+        origin_cities = [
+            {
+                "codigo_ibge": m["codigo_ibge"],
+                "nome": m["nome"],
+                "uf": m["uf"],
+                "latitude": float(m["latitude"]),
+                "longitude": float(m["longitude"]),
+            }
+            for m in found
+        ]
+
+        cities_found = [
+            {
+                "codigo_ibge": c["codigo_ibge"],
+                "nome": c["nome"],
+                "uf": c["uf"],
+                "latitude": float(c["latitude"]),
+                "longitude": float(c["longitude"]),
+            }
+            for c in data["cities"]
+        ]
+
+        polygon_geojson = json.loads(data["polygon_geojson"]) if data["polygon_geojson"] else None
+
+        return {
+            "polygon_geojson": polygon_geojson,
+            "polygon_area_km2": round(data["area_km2"], 2),
+            "origin_cities": origin_cities,
+            "cities_found": cities_found,
+            "not_found": not_found,
         }

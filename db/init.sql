@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS municipios (
 );
 
 CREATE INDEX IF NOT EXISTS idx_municipios_geom ON municipios USING GIST (geom);
-CREATE INDEX IF NOT EXISTS idx_municipios_nome ON municipios (lower(nome));
+CREATE INDEX IF NOT EXISTS idx_municipios_nome ON municipios (unaccent(lower(nome)));
 CREATE INDEX IF NOT EXISTS idx_municipios_uf   ON municipios (uf);
 
 -- Seed: representative sample of Brazilian municipalities (5570 total)

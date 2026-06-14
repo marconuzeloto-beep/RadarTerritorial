@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cobertura Territorial</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
   <header class="header">
@@ -13,89 +16,202 @@
         <span class="logo-icon">&#9670;</span>
         <span class="logo-text">Cobertura<strong>Territorial</strong></span>
       </div>
-      <p class="header-subtitle">Descubra municípios dentro de um raio geográfico</p>
+      <p class="header-subtitle">Análise geográfica de municípios brasileiros via PostGIS</p>
     </div>
   </header>
 
-  <main class="main">
-    <section class="card form-card">
-      <h2 class="section-title">Configurar Análise</h2>
-
-      <div class="form-group">
-        <label for="cities-input">Cidades de origem</label>
-        <div class="tags-wrapper" id="tags-wrapper">
-          <div class="tags-list" id="tags-list"></div>
-          <input
-            type="text"
-            id="cities-input"
-            placeholder="Digite uma cidade e pressione Enter ou vírgula…"
-            autocomplete="off"
-          />
-        </div>
-        <span class="hint">Pressione <kbd>Enter</kbd> ou <kbd>,</kbd> para adicionar cada cidade</span>
-      </div>
-
-      <div class="form-group">
-        <label for="radius-input">Raio de cobertura (km)</label>
-        <div class="radius-row">
-          <input type="range" id="radius-slider" min="10" max="500" step="10" value="50" />
-          <input type="number" id="radius-input" min="1" max="5000" value="50" />
-          <span class="unit">km</span>
-        </div>
-      </div>
-
-      <button id="analyze-btn" class="btn-primary" type="button">
-        <span class="btn-icon">&#9654;</span> Analisar Cobertura
+  <!-- Tab nav -->
+  <nav class="tabs-nav">
+    <div class="tabs-inner">
+      <button class="tab-btn active" data-tab="radius">
+        <span class="tab-icon">&#9678;</span> Raio de Cobertura
       </button>
-    </section>
+      <button class="tab-btn" data-tab="polygon">
+        <span class="tab-icon">&#9419;</span> Cobertura por Área
+      </button>
+    </div>
+  </nav>
 
-    <section id="results-section" class="results-section hidden">
+  <main class="main">
 
-      <div class="stats-row">
-        <div class="stat-card">
-          <span class="stat-number" id="stat-analyzed">0</span>
-          <span class="stat-label">Cidades analisadas</span>
+    <!-- ══════════════════ TAB: RADIUS ══════════════════ -->
+    <div id="tab-radius" class="tab-panel">
+      <section class="card form-card">
+        <h2 class="section-title">Cobertura por Raio</h2>
+
+        <div class="form-group">
+          <label for="cities-input">Cidades de origem</label>
+          <div class="tags-wrapper" id="tags-wrapper">
+            <div class="tags-list" id="tags-list"></div>
+            <input
+              type="text"
+              id="cities-input"
+              placeholder="Digite uma cidade e pressione Enter ou vírgula…"
+              autocomplete="off"
+            />
+          </div>
+          <span class="hint">Pressione <kbd>Enter</kbd> ou <kbd>,</kbd> para adicionar cada cidade</span>
         </div>
-        <div class="stat-card accent">
-          <span class="stat-number" id="stat-discovered">0</span>
-          <span class="stat-label">Municípios descobertos</span>
+
+        <div class="form-group">
+          <label for="radius-input">Raio de cobertura (km)</label>
+          <div class="radius-row">
+            <input type="range" id="radius-slider" min="10" max="500" step="10" value="50" />
+            <input type="number" id="radius-input" min="1" max="5000" value="50" />
+            <span class="unit">km</span>
+          </div>
         </div>
-        <div class="stat-card warn" id="stat-notfound-card" style="display:none">
-          <span class="stat-number" id="stat-notfound">0</span>
-          <span class="stat-label">Não encontradas</span>
+
+        <button id="analyze-btn" class="btn-primary" type="button">
+          <span class="btn-icon">&#9654;</span> Analisar Cobertura
+        </button>
+      </section>
+
+      <section id="results-section" class="results-section hidden">
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-number" id="stat-analyzed">0</span>
+            <span class="stat-label">Cidades analisadas</span>
+          </div>
+          <div class="stat-card accent">
+            <span class="stat-number" id="stat-discovered">0</span>
+            <span class="stat-label">Municípios descobertos</span>
+          </div>
+          <div class="stat-card warn" id="stat-notfound-card" style="display:none">
+            <span class="stat-number" id="stat-notfound">0</span>
+            <span class="stat-label">Não encontradas</span>
+          </div>
         </div>
+
+        <div id="notfound-alert" class="alert alert-warn hidden"></div>
+
+        <div class="results-grid">
+          <div class="card result-card">
+            <h3 class="result-title">
+              <span class="dot dot-blue"></span> Cidades de Origem
+            </h3>
+            <div id="covered-list" class="city-list"></div>
+          </div>
+
+          <div class="card result-card">
+            <h3 class="result-title">
+              <span class="dot dot-green"></span> Municípios Descobertos
+              <input type="text" id="search-discovered" class="search-input" placeholder="Filtrar…" />
+            </h3>
+            <div id="discovered-list" class="city-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <span>Consultando o banco geoespacial…</span>
       </div>
-
-      <div id="notfound-alert" class="alert alert-warn hidden"></div>
-
-      <div class="results-grid">
-        <div class="card result-card">
-          <h3 class="result-title">
-            <span class="dot dot-blue"></span> Cidades de Origem
-          </h3>
-          <div id="covered-list" class="city-list"></div>
-        </div>
-
-        <div class="card result-card">
-          <h3 class="result-title">
-            <span class="dot dot-green"></span> Municípios Descobertos
-            <input type="text" id="search-discovered" class="search-input" placeholder="Filtrar…" />
-          </h3>
-          <div id="discovered-list" class="city-list"></div>
-        </div>
-      </div>
-    </section>
-
-    <div id="loading" class="loading hidden">
-      <div class="spinner"></div>
-      <span>Consultando o banco geoespacial…</span>
+      <div id="error-msg" class="alert alert-error hidden"></div>
     </div>
 
-    <div id="error-msg" class="alert alert-error hidden"></div>
+    <!-- ══════════════════ TAB: POLYGON ══════════════════ -->
+    <div id="tab-polygon" class="tab-panel hidden">
+      <section class="card form-card">
+        <h2 class="section-title">Cobertura Inteligente por Área</h2>
+        <p class="section-desc">
+          Define automaticamente um polígono de influência envolvendo as cidades informadas
+          e descobre todos os municípios dentro da área gerada.
+        </p>
+
+        <div class="form-group">
+          <label for="poly-cities-input">Cidades de origem</label>
+          <div class="tags-wrapper" id="poly-tags-wrapper">
+            <div class="tags-list" id="poly-tags-list"></div>
+            <input
+              type="text"
+              id="poly-cities-input"
+              placeholder="Digite uma cidade e pressione Enter ou vírgula…"
+              autocomplete="off"
+            />
+          </div>
+          <span class="hint">Pressione <kbd>Enter</kbd> ou <kbd>,</kbd> para adicionar cada cidade</span>
+        </div>
+
+        <div class="form-group">
+          <label for="buffer-input">Expansão da borda (km)</label>
+          <div class="radius-row">
+            <input type="range" id="buffer-slider" min="5" max="200" step="5" value="20" />
+            <input type="number" id="buffer-input" min="1" max="2000" value="20" />
+            <span class="unit">km</span>
+          </div>
+          <span class="hint">Distância de expansão além do perímetro formado pelas cidades</span>
+        </div>
+
+        <button id="poly-analyze-btn" class="btn-primary" type="button">
+          <span class="btn-icon">&#9670;</span> Gerar Área de Cobertura
+        </button>
+      </section>
+
+      <section id="poly-results-section" class="results-section hidden">
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-number" id="poly-stat-origin">0</span>
+            <span class="stat-label">Cidades de origem</span>
+          </div>
+          <div class="stat-card accent">
+            <span class="stat-number" id="poly-stat-found">0</span>
+            <span class="stat-label">Municípios na área</span>
+          </div>
+          <div class="stat-card purple">
+            <span class="stat-number" id="poly-stat-area">0</span>
+            <span class="stat-label">Área do polígono (km²)</span>
+          </div>
+          <div class="stat-card warn" id="poly-stat-notfound-card" style="display:none">
+            <span class="stat-number" id="poly-stat-notfound">0</span>
+            <span class="stat-label">Não encontradas</span>
+          </div>
+        </div>
+
+        <div id="poly-notfound-alert" class="alert alert-warn hidden"></div>
+
+        <!-- Map -->
+        <div class="card map-card">
+          <h3 class="result-title">
+            <span class="dot dot-purple"></span> Mapa da Área de Cobertura
+            <span class="map-legend">
+              <span class="legend-item"><span class="legend-dot blue"></span>Origem</span>
+              <span class="legend-item"><span class="legend-dot green"></span>Descoberta</span>
+              <span class="legend-item"><span class="legend-poly"></span>Polígono</span>
+            </span>
+          </h3>
+          <div id="coverage-map"></div>
+        </div>
+
+        <div class="results-grid">
+          <div class="card result-card">
+            <h3 class="result-title">
+              <span class="dot dot-blue"></span> Cidades de Origem
+            </h3>
+            <div id="poly-origin-list" class="city-list"></div>
+          </div>
+
+          <div class="card result-card">
+            <h3 class="result-title">
+              <span class="dot dot-green"></span> Municípios Descobertos
+              <input type="text" id="poly-search" class="search-input" placeholder="Filtrar…" />
+            </h3>
+            <div id="poly-found-list" class="city-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <div id="poly-loading" class="loading hidden">
+        <div class="spinner"></div>
+        <span>Construindo polígono e consultando o PostGIS…</span>
+      </div>
+      <div id="poly-error-msg" class="alert alert-error hidden"></div>
+    </div>
+
   </main>
 
   <footer class="footer">
-    Cobertura Territorial &bull; Dados geoespaciais via PostGIS
+    Cobertura Territorial &bull; Dados geoespaciais via PostGIS &bull; Mapas via Leaflet
   </footer>
 
   <script src="app.js"></script>
