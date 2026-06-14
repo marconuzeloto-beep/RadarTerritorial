@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cobertura Territorial</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">&#9670;</span>
+        <span class="logo-text">Cobertura<strong>Territorial</strong></span>
+      </div>
+      <p class="header-subtitle">Descubra municípios dentro de um raio geográfico</p>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="card form-card">
+      <h2 class="section-title">Configurar Análise</h2>
+
+      <div class="form-group">
+        <label for="cities-input">Cidades de origem</label>
+        <div class="tags-wrapper" id="tags-wrapper">
+          <div class="tags-list" id="tags-list"></div>
+          <input
+            type="text"
+            id="cities-input"
+            placeholder="Digite uma cidade e pressione Enter ou vírgula…"
+            autocomplete="off"
+          />
+        </div>
+        <span class="hint">Pressione <kbd>Enter</kbd> ou <kbd>,</kbd> para adicionar cada cidade</span>
+      </div>
+
+      <div class="form-group">
+        <label for="radius-input">Raio de cobertura (km)</label>
+        <div class="radius-row">
+          <input type="range" id="radius-slider" min="10" max="500" step="10" value="50" />
+          <input type="number" id="radius-input" min="1" max="5000" value="50" />
+          <span class="unit">km</span>
+        </div>
+      </div>
+
+      <button id="analyze-btn" class="btn-primary" type="button">
+        <span class="btn-icon">&#9654;</span> Analisar Cobertura
+      </button>
+    </section>
+
+    <section id="results-section" class="results-section hidden">
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="stat-number" id="stat-analyzed">0</span>
+          <span class="stat-label">Cidades analisadas</span>
+        </div>
+        <div class="stat-card accent">
+          <span class="stat-number" id="stat-discovered">0</span>
+          <span class="stat-label">Municípios descobertos</span>
+        </div>
+        <div class="stat-card warn" id="stat-notfound-card" style="display:none">
+          <span class="stat-number" id="stat-notfound">0</span>
+          <span class="stat-label">Não encontradas</span>
+        </div>
+      </div>
+
+      <div id="notfound-alert" class="alert alert-warn hidden"></div>
+
+      <div class="results-grid">
+        <div class="card result-card">
+          <h3 class="result-title">
+            <span class="dot dot-blue"></span> Cidades de Origem
+          </h3>
+          <div id="covered-list" class="city-list"></div>
+        </div>
+
+        <div class="card result-card">
+          <h3 class="result-title">
+            <span class="dot dot-green"></span> Municípios Descobertos
+            <input type="text" id="search-discovered" class="search-input" placeholder="Filtrar…" />
+          </h3>
+          <div id="discovered-list" class="city-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <span>Consultando o banco geoespacial…</span>
+    </div>
+
+    <div id="error-msg" class="alert alert-error hidden"></div>
+  </main>
+
+  <footer class="footer">
+    Cobertura Territorial &bull; Dados geoespaciais via PostGIS
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
