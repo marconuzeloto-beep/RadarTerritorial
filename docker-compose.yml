@@ -27,6 +27,8 @@ services:
     container_name: radar_backend
     environment:
       DATABASE_URL: postgresql+asyncpg://radar:radar@db:5432/radarterritorial
+      ORS_API_KEY: ${ORS_API_KEY:-}
+      ROUTING_PROVIDER: ${ROUTING_PROVIDER:-ors}
     ports:
       - "8000:8000"
     depends_on:

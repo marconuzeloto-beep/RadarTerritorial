@@ -64,8 +64,9 @@ function makeTagInput(wrapperId, listId, inputId) {
   return { getTags: () => [...tags] };
 }
 
-const radiusTagInput  = makeTagInput('tags-wrapper',      'tags-list',      'cities-input');
-const polygonTagInput = makeTagInput('poly-tags-wrapper', 'poly-tags-list', 'poly-cities-input');
+const radiusTagInput   = makeTagInput('tags-wrapper',      'tags-list',      'cities-input');
+const polygonTagInput  = makeTagInput('poly-tags-wrapper', 'poly-tags-list', 'poly-cities-input');
+const logisticsTagInput = makeTagInput('log-tags-wrapper', 'log-tags-list', 'log-cities-input');
 
 // ══════════════════════════════════════════════════════════════════
 //  TAB 1 — RADIUS
@@ -313,6 +314,224 @@ function buildMap(data) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+//  TAB 3 — LOGISTICS
+// ══════════════════════════════════════════════════════════════════
+const logAnalyzeBtn   = document.getElementById('log-analyze-btn');
+const logResultsSec   = document.getElementById('log-results-section');
+const logLoadingEl    = document.getElementById('log-loading');
+const logErrorMsg     = document.getElementById('log-error-msg');
+const logStatOrigin   = document.getElementById('log-stat-origin');
+const logStatCount    = document.getElementById('log-stat-count');
+const logStatPop      = document.getElementById('log-stat-pop');
+const logStatDist     = document.getElementById('log-stat-dist');
+const logStatTime     = document.getElementById('log-stat-time');
+const logStatNFCard   = document.getElementById('log-stat-nf-card');
+const logStatNF       = document.getElementById('log-stat-notfound');
+const logNFAlert      = document.getElementById('log-notfound-alert');
+const logOriginList   = document.getElementById('log-origin-list');
+const logFoundList    = document.getElementById('log-found-list');
+const logSearchInput  = document.getElementById('log-search');
+const logTimeGroup    = document.getElementById('log-time-group');
+const logDistGroup    = document.getElementById('log-dist-group');
+const logTimeSlider   = document.getElementById('log-time-slider');
+const logTimeInput    = document.getElementById('log-time-input');
+const logDistSlider   = document.getElementById('log-dist-slider');
+const logDistInput    = document.getElementById('log-dist-input');
+const modeTimeBtnEl   = document.getElementById('mode-time-btn');
+const modeDistBtnEl   = document.getElementById('mode-dist-btn');
+
+let logMode = 'time'; // 'time' | 'distance'
+
+// ── Mode toggle ────────────────────────────────────────────────────
+[modeTimeBtnEl, modeDistBtnEl].forEach(btn => {
+  btn.addEventListener('click', () => {
+    logMode = btn.dataset.mode;
+    modeTimeBtnEl.classList.toggle('active', logMode === 'time');
+    modeDistBtnEl.classList.toggle('active', logMode === 'distance');
+    logTimeGroup.classList.toggle('hidden', logMode !== 'time');
+    logDistGroup.classList.toggle('hidden', logMode !== 'distance');
+  });
+});
+
+// ── Sliders ────────────────────────────────────────────────────────
+logTimeSlider.addEventListener('input', () => { logTimeInput.value = logTimeSlider.value; });
+logTimeInput.addEventListener('input', () => {
+  logTimeSlider.value = Math.min(360, Math.max(15, parseInt(logTimeInput.value) || 15));
+});
+logDistSlider.addEventListener('input', () => { logDistInput.value = logDistSlider.value; });
+logDistInput.addEventListener('input', () => {
+  logDistSlider.value = Math.min(500, Math.max(20, parseInt(logDistInput.value) || 20));
+});
+
+// ── Analyze ────────────────────────────────────────────────────────
+logAnalyzeBtn.addEventListener('click', async () => {
+  const cities = logisticsTagInput.getTags();
+  if (!cities.length) { showError(logErrorMsg, 'Adicione pelo menos uma cidade.'); return; }
+
+  const body = { cities };
+  if (logMode === 'time') {
+    const v = parseFloat(logTimeInput.value);
+    if (!v || v <= 0) { showError(logErrorMsg, 'Informe um tempo válido.'); return; }
+    body.max_travel_minutes = v;
+  } else {
+    const v = parseFloat(logDistInput.value);
+    if (!v || v <= 0) { showError(logErrorMsg, 'Informe uma distância válida.'); return; }
+    body.max_distance_km = v;
+  }
+
+  setLoading(logLoadingEl, logAnalyzeBtn, true);
+  hideEl(logErrorMsg);
+  hideEl(logResultsSec);
+
+  try {
+    const data = await post(`${API_BASE}/logistics`, body);
+    renderLogisticsResults(data);
+  } catch (err) {
+    showError(logErrorMsg, `Erro: ${err.message}`);
+  } finally {
+    setLoading(logLoadingEl, logAnalyzeBtn, false);
+  }
+});
+
+let logisticsMap = null;
+let allLogFound  = [];
+
+function renderLogisticsResults(data) {
+  logStatOrigin.textContent = data.origin_cities.length;
+  logStatCount.textContent  = data.cities_count;
+  logStatPop.textContent    = formatPop(data.total_population);
+  logStatDist.textContent   = data.avg_distance_km;
+  logStatTime.textContent   = data.avg_time_minutes;
+
+  if (data.not_found?.length) {
+    logStatNF.textContent = data.not_found.length;
+    logStatNFCard.style.display = '';
+    logNFAlert.textContent = `Não encontradas: ${data.not_found.join(', ')}`;
+    logNFAlert.classList.remove('hidden');
+  } else {
+    logStatNFCard.style.display = 'none';
+    logNFAlert.classList.add('hidden');
+  }
+
+  logOriginList.innerHTML = '';
+  data.origin_cities.forEach(c => logOriginList.appendChild(makeLogCityItem(c, false)));
+
+  allLogFound = data.reachable_cities;
+  renderLogFoundList(allLogFound);
+
+  logResultsSec.classList.remove('hidden');
+  logResultsSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  requestAnimationFrame(() => buildLogisticsMap(data));
+}
+
+function renderLogFoundList(list) {
+  logFoundList.innerHTML = '';
+  if (!list.length) {
+    logFoundList.appendChild(emptyMsg('Nenhum município alcançável neste critério.'));
+    return;
+  }
+  list.forEach(c => logFoundList.appendChild(makeLogCityItem(c, true)));
+}
+
+logSearchInput.addEventListener('input', () => {
+  const q = logSearchInput.value.trim().toLowerCase();
+  renderLogFoundList(
+    q ? allLogFound.filter(c =>
+      c.nome.toLowerCase().includes(q) || c.uf.toLowerCase().includes(q)
+    ) : allLogFound
+  );
+});
+
+function makeLogCityItem(city, showMeta = false) {
+  const el = document.createElement('div');
+  el.className = 'city-item';
+  const metaHtml = showMeta ? `
+    <span class="city-item-meta">
+      ${city.estimated_distance_km != null
+        ? `<span class="city-dist">${city.estimated_distance_km} km</span>`
+        : ''}
+      ${city.estimated_time_minutes != null
+        ? `<span class="city-item-pop" title="Tempo estimado">${city.estimated_time_minutes} min</span>`
+        : ''}
+    </span>` : '';
+  const popHtml = city.populacao
+    ? `<span class="city-item-pop" title="População">${formatPop(city.populacao)}</span>`
+    : '';
+  el.innerHTML = `
+    <span class="city-name">${escapeHtml(city.nome)}</span>
+    <span class="city-uf">${escapeHtml(city.uf)}</span>
+    ${popHtml}
+    ${metaHtml}
+  `;
+  return el;
+}
+
+// ── Logistics Leaflet map ──────────────────────────────────────────
+function buildLogisticsMap(data) {
+  if (logisticsMap) { logisticsMap.remove(); logisticsMap = null; }
+
+  logisticsMap = L.map('logistics-map', { zoomControl: true });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; CARTO',
+    maxZoom: 19,
+  }).addTo(logisticsMap);
+
+  const bounds = L.latLngBounds([]);
+
+  // Isochrone polygon — orange
+  if (data.isochrone_geojson) {
+    const isoLayer = L.geoJSON(data.isochrone_geojson, {
+      style: {
+        color: '#fb923c',
+        weight: 2,
+        opacity: 0.85,
+        fillColor: '#fb923c',
+        fillOpacity: 0.12,
+      },
+    }).addTo(logisticsMap);
+    if (isoLayer.getBounds().isValid()) bounds.extend(isoLayer.getBounds());
+  }
+
+  // Reachable cities — green
+  data.reachable_cities.forEach(c => {
+    const m = L.circleMarker([c.latitude, c.longitude], {
+      radius: 6,
+      color: '#34d399',
+      fillColor: '#34d399',
+      fillOpacity: 0.85,
+      weight: 1.5,
+    }).addTo(logisticsMap);
+    m.bindTooltip(
+      `<b>${c.nome}</b> – ${c.uf}<br>` +
+      `&#128100; ${formatPop(c.populacao)}<br>` +
+      `&#128650; ~${c.estimated_distance_km} km · ${c.estimated_time_minutes} min`,
+      { sticky: true }
+    );
+    bounds.extend([c.latitude, c.longitude]);
+  });
+
+  // Origin cities — blue (on top)
+  data.origin_cities.forEach(c => {
+    const m = L.circleMarker([c.latitude, c.longitude], {
+      radius: 9,
+      color: '#fff',
+      fillColor: '#4f8ef7',
+      fillOpacity: 1,
+      weight: 2,
+    }).addTo(logisticsMap);
+    m.bindTooltip(`<b>${c.nome}</b> – ${c.uf}<br><small>Origem</small>`, { sticky: true });
+    bounds.extend([c.latitude, c.longitude]);
+  });
+
+  if (bounds.isValid()) {
+    logisticsMap.fitBounds(bounds, { padding: [30, 30] });
+  } else {
+    logisticsMap.setView([-14.235, -51.925], 4);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
 //  SHARED HELPERS
 // ══════════════════════════════════════════════════════════════════
 async function post(url, body) {
@@ -363,6 +582,13 @@ function hideEl(el) { el.classList.add('hidden'); }
 function formatArea(km2) {
   if (km2 >= 1000) return `${(km2 / 1000).toFixed(1)} mil`;
   return km2.toFixed(0);
+}
+
+function formatPop(n) {
+  if (!n) return '–';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(0)}k`;
+  return String(n);
 }
 
 function escapeHtml(str) {

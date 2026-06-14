@@ -29,6 +29,9 @@
       <button class="tab-btn" data-tab="polygon">
         <span class="tab-icon">&#9419;</span> Cobertura por Área
       </button>
+      <button class="tab-btn" data-tab="logistics">
+        <span class="tab-icon">&#128650;</span> Cobertura Logística
+      </button>
     </div>
   </nav>
 
@@ -206,6 +209,139 @@
         <span>Construindo polígono e consultando o PostGIS…</span>
       </div>
       <div id="poly-error-msg" class="alert alert-error hidden"></div>
+    </div>
+
+    <!-- ══════════════════ TAB: LOGISTICS ══════════════════ -->
+    <div id="tab-logistics" class="tab-panel hidden">
+      <section class="card form-card">
+        <h2 class="section-title">Cobertura Logística</h2>
+        <p class="section-desc">
+          Descubra municípios alcançáveis por rotas reais de estradas, considerando tempo
+          ou distância de deslocamento. Powered by OpenRouteService.
+        </p>
+
+        <div class="form-group">
+          <label for="log-cities-input">Cidades de origem</label>
+          <div class="tags-wrapper" id="log-tags-wrapper">
+            <div class="tags-list" id="log-tags-list"></div>
+            <input
+              type="text"
+              id="log-cities-input"
+              placeholder="Digite uma cidade e pressione Enter ou vírgula…"
+              autocomplete="off"
+            />
+          </div>
+          <span class="hint">Pressione <kbd>Enter</kbd> ou <kbd>,</kbd> para adicionar cada cidade</span>
+        </div>
+
+        <div class="form-group">
+          <label>Critério de alcance</label>
+          <div class="mode-toggle">
+            <button class="mode-btn active" id="mode-time-btn" type="button" data-mode="time">
+              &#9201; Por Tempo
+            </button>
+            <button class="mode-btn" id="mode-dist-btn" type="button" data-mode="distance">
+              &#8596; Por Distância
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group" id="log-time-group">
+          <label for="log-time-input">Tempo máximo de viagem</label>
+          <div class="radius-row">
+            <input type="range" id="log-time-slider" min="15" max="360" step="15" value="90" />
+            <input type="number" id="log-time-input" min="1" max="1440" value="90" />
+            <span class="unit">min</span>
+          </div>
+          <span class="hint">Exemplos: 60 min (1 hora) · 90 min · 120 min (2 horas)</span>
+        </div>
+
+        <div class="form-group hidden" id="log-dist-group">
+          <label for="log-dist-input">Distância máxima por estrada</label>
+          <div class="radius-row">
+            <input type="range" id="log-dist-slider" min="20" max="500" step="10" value="80" />
+            <input type="number" id="log-dist-input" min="1" max="5000" value="80" />
+            <span class="unit">km</span>
+          </div>
+        </div>
+
+        <div class="log-api-note">
+          <span class="note-icon">&#8505;</span>
+          Requer <strong>ORS_API_KEY</strong> configurada no backend.
+          Chave gratuita em <code>openrouteservice.org</code>.
+        </div>
+
+        <button id="log-analyze-btn" class="btn-primary" type="button">
+          <span class="btn-icon">&#128650;</span> Calcular Cobertura Logística
+        </button>
+      </section>
+
+      <section id="log-results-section" class="results-section hidden">
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-number" id="log-stat-origin">0</span>
+            <span class="stat-label">Cidades de origem</span>
+          </div>
+          <div class="stat-card accent">
+            <span class="stat-number" id="log-stat-count">0</span>
+            <span class="stat-label">Municípios alcançáveis</span>
+          </div>
+          <div class="stat-card purple">
+            <span class="stat-number" id="log-stat-pop">0</span>
+            <span class="stat-label">População coberta</span>
+          </div>
+          <div class="stat-card teal">
+            <span class="stat-number" id="log-stat-dist">0</span>
+            <span class="stat-label">Distância média (km)</span>
+          </div>
+          <div class="stat-card orange">
+            <span class="stat-number" id="log-stat-time">0</span>
+            <span class="stat-label">Tempo médio (min)</span>
+          </div>
+          <div class="stat-card warn" id="log-stat-nf-card" style="display:none">
+            <span class="stat-number" id="log-stat-notfound">0</span>
+            <span class="stat-label">Não encontradas</span>
+          </div>
+        </div>
+
+        <div id="log-notfound-alert" class="alert alert-warn hidden"></div>
+
+        <!-- Logistics Map -->
+        <div class="card map-card">
+          <h3 class="result-title">
+            <span class="dot dot-orange"></span> Mapa Logístico
+            <span class="map-legend">
+              <span class="legend-item"><span class="legend-dot blue"></span>Origem</span>
+              <span class="legend-item"><span class="legend-dot green"></span>Alcançável</span>
+              <span class="legend-item"><span class="legend-poly orange-poly"></span>Isócrona</span>
+            </span>
+          </h3>
+          <div id="logistics-map"></div>
+        </div>
+
+        <div class="results-grid">
+          <div class="card result-card">
+            <h3 class="result-title">
+              <span class="dot dot-blue"></span> Cidades de Origem
+            </h3>
+            <div id="log-origin-list" class="city-list"></div>
+          </div>
+
+          <div class="card result-card">
+            <h3 class="result-title">
+              <span class="dot dot-green"></span> Municípios Alcançáveis
+              <input type="text" id="log-search" class="search-input" placeholder="Filtrar…" />
+            </h3>
+            <div id="log-found-list" class="city-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <div id="log-loading" class="loading hidden">
+        <div class="spinner"></div>
+        <span>Calculando isócronas via OpenRouteService e consultando PostGIS…</span>
+      </div>
+      <div id="log-error-msg" class="alert alert-error hidden"></div>
     </div>
 
   </main>

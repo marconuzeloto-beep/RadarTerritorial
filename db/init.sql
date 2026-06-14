@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS municipios (
     uf          VARCHAR(2)     NOT NULL,
     latitude    NUMERIC(10, 7) NOT NULL,
     longitude   NUMERIC(10, 7) NOT NULL,
-    geom        GEOMETRY(Point, 4326) NOT NULL
+    geom        GEOMETRY(Point, 4326) NOT NULL,
+    populacao   INTEGER        NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_municipios_geom ON municipios USING GIST (geom);
@@ -237,3 +238,209 @@ INSERT INTO municipios (codigo_ibge, nome, uf, latitude, longitude, geom) VALUES
 -- Amapá
 ('1600303','Macapá','AP',0.0349,-51.0694,ST_SetSRID(ST_MakePoint(-51.0694,0.0349),4326))
 ON CONFLICT (codigo_ibge) DO NOTHING;
+
+-- ── Population data (IBGE 2022 census estimates) ──────────────────────────
+UPDATE municipios SET populacao = 11451245 WHERE codigo_ibge = '3550308'; -- São Paulo
+UPDATE municipios SET populacao = 1213792  WHERE codigo_ibge = '3509502'; -- Campinas
+UPDATE municipios SET populacao = 699848   WHERE codigo_ibge = '3552205'; -- Sorocaba
+UPDATE municipios SET populacao = 431546   WHERE codigo_ibge = '3525904'; -- Jundiaí
+UPDATE municipios SET populacao = 1391791  WHERE codigo_ibge = '3518800'; -- Guarulhos
+UPDATE municipios SET populacao = 720964   WHERE codigo_ibge = '3548708'; -- Santo André
+UPDATE municipios SET populacao = 432957   WHERE codigo_ibge = '3548807'; -- Santos
+UPDATE municipios SET populacao = 853500   WHERE codigo_ibge = '3549805'; -- São Bernardo do Campo
+UPDATE municipios SET populacao = 165468   WHERE codigo_ibge = '3549904'; -- São Caetano do Sul
+UPDATE municipios SET populacao = 432132   WHERE codigo_ibge = '3513801'; -- Diadema
+UPDATE municipios SET populacao = 490898   WHERE codigo_ibge = '3529401'; -- Mauá
+UPDATE municipios SET populacao = 722497   WHERE codigo_ibge = '3544103'; -- Ribeirão Preto
+UPDATE municipios SET populacao = 737464   WHERE codigo_ibge = '3554102'; -- São José dos Campos
+UPDATE municipios SET populacao = 491266   WHERE codigo_ibge = '3556206'; -- São José do Rio Preto
+UPDATE municipios SET populacao = 709733   WHERE codigo_ibge = '3530607'; -- Osasco
+UPDATE municipios SET populacao = 244803   WHERE codigo_ibge = '3501608'; -- Americana
+UPDATE municipios SET populacao = 407252   WHERE codigo_ibge = '3543402'; -- Piracicaba
+UPDATE municipios SET populacao = 207484   WHERE codigo_ibge = '3545803'; -- Santa Bárbara d'Oeste
+UPDATE municipios SET populacao = 266991   WHERE codigo_ibge = '3506003'; -- Barueri
+UPDATE municipios SET populacao = 262951   WHERE codigo_ibge = '3522604'; -- Indaiatuba
+UPDATE municipios SET populacao = 285665   WHERE codigo_ibge = '3557303'; -- Sumaré
+UPDATE municipios SET populacao = 140490   WHERE codigo_ibge = '3513108'; -- Cubatão
+UPDATE municipios SET populacao = 334933   WHERE codigo_ibge = '3537107'; -- Praia Grande
+UPDATE municipios SET populacao = 302994   WHERE codigo_ibge = '3557208'; -- Suzano
+UPDATE municipios SET populacao = 209819   WHERE codigo_ibge = '3502804'; -- Araçatuba
+UPDATE municipios SET populacao = 381474   WHERE codigo_ibge = '3505708'; -- Bauru
+UPDATE municipios SET populacao = 228743   WHERE codigo_ibge = '3538709'; -- Presidente Prudente
+UPDATE municipios SET populacao = 131906   WHERE codigo_ibge = '3541000'; -- Registro
+UPDATE municipios SET populacao = 112779   WHERE codigo_ibge = '3534401'; -- Paulínia
+UPDATE municipios SET populacao = 238339   WHERE codigo_ibge = '3504503'; -- Araraquara
+UPDATE municipios SET populacao = 148924   WHERE codigo_ibge = '3504206'; -- Araras
+UPDATE municipios SET populacao = 81897    WHERE codigo_ibge = '3510609'; -- Cajamar
+UPDATE municipios SET populacao = 268175   WHERE codigo_ibge = '3513504'; -- Cotia
+UPDATE municipios SET populacao = 280602   WHERE codigo_ibge = '3516200'; -- Embu das Artes
+UPDATE municipios SET populacao = 240889   WHERE codigo_ibge = '3523107'; -- Itapevi
+UPDATE municipios SET populacao = 85279    WHERE codigo_ibge = '3525003'; -- Jaboticabal
+UPDATE municipios SET populacao = 113969   WHERE codigo_ibge = '3526902'; -- Leme
+UPDATE municipios SET populacao = 248748   WHERE codigo_ibge = '3529005'; -- Marília
+UPDATE municipios SET populacao = 64826    WHERE codigo_ibge = '3531803'; -- Nova Odessa
+UPDATE municipios SET populacao = 212984   WHERE codigo_ibge = '3541406'; -- Rio Claro
+UPDATE municipios SET populacao = 289070   WHERE codigo_ibge = '3557401'; -- Taboão da Serra
+UPDATE municipios SET populacao = 325497   WHERE codigo_ibge = '3558006'; -- Taubaté
+UPDATE municipios SET populacao = 130636   WHERE codigo_ibge = '3561101'; -- Valinhos
+UPDATE municipios SET populacao = 88488    WHERE codigo_ibge = '3519071'; -- Hortolândia
+UPDATE municipios SET populacao = 121543   WHERE codigo_ibge = '3522000'; -- Itatiba
+UPDATE municipios SET populacao = 76271    WHERE codigo_ibge = '3561901'; -- Vinhedo
+UPDATE municipios SET populacao = 134048   WHERE codigo_ibge = '3563238'; -- Votorantim
+UPDATE municipios SET populacao = 153005   WHERE codigo_ibge = '3508801'; -- Botucatu
+UPDATE municipios SET populacao = 239139   WHERE codigo_ibge = '3525300'; -- Jacareí
+-- Rio de Janeiro
+UPDATE municipios SET populacao = 6747815  WHERE codigo_ibge = '3304557'; -- Rio de Janeiro
+UPDATE municipios SET populacao = 513584   WHERE codigo_ibge = '3303500'; -- Niterói
+UPDATE municipios SET populacao = 924624   WHERE codigo_ibge = '3301702'; -- Duque de Caxias
+UPDATE municipios SET populacao = 1101502  WHERE codigo_ibge = '3304904'; -- São Gonçalo
+UPDATE municipios SET populacao = 510374   WHERE codigo_ibge = '3301009'; -- Belford Roxo
+UPDATE municipios SET populacao = 174940   WHERE codigo_ibge = '3302858'; -- Mesquita
+UPDATE municipios SET populacao = 243386   WHERE codigo_ibge = '3302205'; -- Itaboraí
+UPDATE municipios SET populacao = 819468   WHERE codigo_ibge = '3303302'; -- Nova Iguaçu
+UPDATE municipios SET populacao = 472008   WHERE codigo_ibge = '3305109'; -- São João de Meriti
+UPDATE municipios SET populacao = 354876   WHERE codigo_ibge = '3303906'; -- Petrópolis
+UPDATE municipios SET populacao = 274206   WHERE codigo_ibge = '3306305'; -- Volta Redonda
+UPDATE municipios SET populacao = 131392   WHERE codigo_ibge = '3302403'; -- Itaguaí
+UPDATE municipios SET populacao = 182063   WHERE codigo_ibge = '3305802'; -- Teresópolis
+UPDATE municipios SET populacao = 204166   WHERE codigo_ibge = '3300456'; -- Angra dos Reis
+UPDATE municipios SET populacao = 162380   WHERE codigo_ibge = '3303203'; -- Nilópolis
+UPDATE municipios SET populacao = 511132   WHERE codigo_ibge = '3301603'; -- Campos dos Goytacazes
+UPDATE municipios SET populacao = 261734   WHERE codigo_ibge = '3302007'; -- Macaé
+-- Minas Gerais
+UPDATE municipios SET populacao = 2315560  WHERE codigo_ibge = '3106200'; -- Belo Horizonte
+UPDATE municipios SET populacao = 706597   WHERE codigo_ibge = '3170206'; -- Uberlândia
+UPDATE municipios SET populacao = 413487   WHERE codigo_ibge = '3143302'; -- Montes Claros
+UPDATE municipios SET populacao = 668390   WHERE codigo_ibge = '3118601'; -- Contagem
+UPDATE municipios SET populacao = 577179   WHERE codigo_ibge = '3122306'; -- Juiz de Fora
+UPDATE municipios SET populacao = 362187   WHERE codigo_ibge = '3152501'; -- Ribeirão das Neves
+UPDATE municipios SET populacao = 338861   WHERE codigo_ibge = '3171303'; -- Uberaba
+UPDATE municipios SET populacao = 249739   WHERE codigo_ibge = '3167202'; -- Sete Lagoas
+UPDATE municipios SET populacao = 436309   WHERE codigo_ibge = '3107901'; -- Betim
+UPDATE municipios SET populacao = 276674   WHERE codigo_ibge = '3131307'; -- Governador Valadares
+UPDATE municipios SET populacao = 248476   WHERE codigo_ibge = '3162922'; -- Santa Luzia
+UPDATE municipios SET populacao = 133280   WHERE codigo_ibge = '3157807'; -- Sabará
+UPDATE municipios SET populacao = 255971   WHERE codigo_ibge = '3130706'; -- Ipatinga
+UPDATE municipios SET populacao = 153706   WHERE codigo_ibge = '3145901'; -- Patos de Minas
+-- Paraná
+UPDATE municipios SET populacao = 1773733  WHERE codigo_ibge = '4106902'; -- Curitiba
+UPDATE municipios SET populacao = 585674   WHERE codigo_ibge = '4109401'; -- Londrina
+UPDATE municipios SET populacao = 436472   WHERE codigo_ibge = '4115200'; -- Maringá
+UPDATE municipios SET populacao = 116216   WHERE codigo_ibge = '4104808'; -- Campo Largo
+UPDATE municipios SET populacao = 360548   WHERE codigo_ibge = '4113700'; -- Ponta Grossa
+UPDATE municipios SET populacao = 357120   WHERE codigo_ibge = '4127700'; -- São José dos Pinhais
+UPDATE municipios SET populacao = 337967   WHERE codigo_ibge = '4104055'; -- Cascavel
+UPDATE municipios SET populacao = 279297   WHERE codigo_ibge = '4106209'; -- Colombo
+UPDATE municipios SET populacao = 134788   WHERE codigo_ibge = '4118402'; -- Pinhais
+UPDATE municipios SET populacao = 108574   WHERE codigo_ibge = '4125506'; -- Sarandi
+UPDATE municipios SET populacao = 137858   WHERE codigo_ibge = '4103305'; -- Apucarana
+UPDATE municipios SET populacao = 130523   WHERE codigo_ibge = '4102406'; -- Almirante Tamandaré
+-- Rio Grande do Sul
+UPDATE municipios SET populacao = 1332570  WHERE codigo_ibge = '4314902'; -- Porto Alegre
+UPDATE municipios SET populacao = 579304   WHERE codigo_ibge = '4304606'; -- Caxias do Sul
+UPDATE municipios SET populacao = 277309   WHERE codigo_ibge = '4316907'; -- Santa Maria
+UPDATE municipios SET populacao = 248279   WHERE codigo_ibge = '4313409'; -- Novo Hamburgo
+UPDATE municipios SET populacao = 348685   WHERE codigo_ibge = '4306403'; -- Gravataí
+UPDATE municipios SET populacao = 91503    WHERE codigo_ibge = '4308904'; -- Ijuí
+UPDATE municipios SET populacao = 209907   WHERE codigo_ibge = '4309209'; -- Passo Fundo
+UPDATE municipios SET populacao = 346593   WHERE codigo_ibge = '4303103'; -- Canoas
+UPDATE municipios SET populacao = 328275   WHERE codigo_ibge = '4312401'; -- Pelotas
+UPDATE municipios SET populacao = 229773   WHERE codigo_ibge = '4318705'; -- São Leopoldo
+UPDATE municipios SET populacao = 102885   WHERE codigo_ibge = '4307708'; -- Guaíba
+UPDATE municipios SET populacao = 107394   WHERE codigo_ibge = '4305108'; -- Erechim
+-- Santa Catarina
+UPDATE municipios SET populacao = 537211   WHERE codigo_ibge = '4205407'; -- Florianópolis
+UPDATE municipios SET populacao = 361855   WHERE codigo_ibge = '4202404'; -- Blumenau
+UPDATE municipios SET populacao = 258069   WHERE codigo_ibge = '4218707'; -- São José
+UPDATE municipios SET populacao = 228008   WHERE codigo_ibge = '4204202'; -- Criciúma
+UPDATE municipios SET populacao = 612043   WHERE codigo_ibge = '4209102'; -- Joinville
+UPDATE municipios SET populacao = 229953   WHERE codigo_ibge = '4203808'; -- Chapecó
+UPDATE municipios SET populacao = 166660   WHERE codigo_ibge = '4209300'; -- Lages
+UPDATE municipios SET populacao = 138737   WHERE codigo_ibge = '4202008'; -- Balneário Camboriú
+UPDATE municipios SET populacao = 171589   WHERE codigo_ibge = '4215604'; -- Palhoça
+-- Bahia
+UPDATE municipios SET populacao = 2886698  WHERE codigo_ibge = '2927408'; -- Salvador
+UPDATE municipios SET populacao = 631053   WHERE codigo_ibge = '2910800'; -- Feira de Santana
+UPDATE municipios SET populacao = 209024   WHERE codigo_ibge = '2919553'; -- Lauro de Freitas
+UPDATE municipios SET populacao = 312979   WHERE codigo_ibge = '2910727'; -- Camaçari
+UPDATE municipios SET populacao = 214944   WHERE codigo_ibge = '2924900'; -- Juazeiro
+UPDATE municipios SET populacao = 346069   WHERE codigo_ibge = '2933307'; -- Vitória da Conquista
+UPDATE municipios SET populacao = 156190   WHERE codigo_ibge = '2918407'; -- Ilhéus
+UPDATE municipios SET populacao = 150154   WHERE codigo_ibge = '2930709'; -- Simões Filho
+-- Pernambuco
+UPDATE municipios SET populacao = 1645727  WHERE codigo_ibge = '2611606'; -- Recife
+UPDATE municipios SET populacao = 347683   WHERE codigo_ibge = '2604106'; -- Caruaru
+UPDATE municipios SET populacao = 726087   WHERE codigo_ibge = '2607901'; -- Jaboatão dos Guararapes
+UPDATE municipios SET populacao = 397302   WHERE codigo_ibge = '2611101'; -- Olinda
+UPDATE municipios SET populacao = 349108   WHERE codigo_ibge = '2609600'; -- Paulista
+UPDATE municipios SET populacao = 361248   WHERE codigo_ibge = '2614105'; -- Petrolina
+UPDATE municipios SET populacao = 186148   WHERE codigo_ibge = '2602902'; -- Camarajibe
+-- Ceará
+UPDATE municipios SET populacao = 2703391  WHERE codigo_ibge = '2304400'; -- Fortaleza
+UPDATE municipios SET populacao = 247386   WHERE codigo_ibge = '2307650'; -- Maracanaú
+UPDATE municipios SET populacao = 356069   WHERE codigo_ibge = '2303709'; -- Caucaia
+UPDATE municipios SET populacao = 216767   WHERE codigo_ibge = '2311405'; -- Sobral
+UPDATE municipios SET populacao = 133939   WHERE codigo_ibge = '2305506'; -- Juazeiro do Norte
+-- Amazonas
+UPDATE municipios SET populacao = 2063689  WHERE codigo_ibge = '1302603'; -- Manaus
+UPDATE municipios SET populacao = 101952   WHERE codigo_ibge = '1300607'; -- Itacoatiara
+UPDATE municipios SET populacao = 120890   WHERE codigo_ibge = '1303569'; -- Parintins
+-- Pará
+UPDATE municipios SET populacao = 1499641  WHERE codigo_ibge = '1501402'; -- Belém
+UPDATE municipios SET populacao = 535547   WHERE codigo_ibge = '1502400'; -- Ananindeua
+UPDATE municipios SET populacao = 309077   WHERE codigo_ibge = '1508100'; -- Santarém
+UPDATE municipios SET populacao = 278235   WHERE codigo_ibge = '1505064'; -- Marabá
+-- Goiás
+UPDATE municipios SET populacao = 1437237  WHERE codigo_ibge = '5208707'; -- Goiânia
+UPDATE municipios SET populacao = 616668   WHERE codigo_ibge = '5201405'; -- Aparecida de Goiânia
+UPDATE municipios SET populacao = 130050   WHERE codigo_ibge = '5221858'; -- Trindade
+UPDATE municipios SET populacao = 218743   WHERE codigo_ibge = '5209937'; -- Luziânia
+UPDATE municipios SET populacao = 121283   WHERE codigo_ibge = '5218805'; -- Senador Canedo
+UPDATE municipios SET populacao = 196082   WHERE codigo_ibge = '5200258'; -- Águas Lindas de Goiás
+UPDATE municipios SET populacao = 178397   WHERE codigo_ibge = '5219753'; -- Valparaíso de Goiás
+-- Distrito Federal
+UPDATE municipios SET populacao = 2817068  WHERE codigo_ibge = '5300108'; -- Brasília
+-- Mato Grosso do Sul
+UPDATE municipios SET populacao = 916001   WHERE codigo_ibge = '5002704'; -- Campo Grande
+UPDATE municipios SET populacao = 109466   WHERE codigo_ibge = '5003207'; -- Corumbá
+UPDATE municipios SET populacao = 228593   WHERE codigo_ibge = '5005103'; -- Dourados
+-- Mato Grosso
+UPDATE municipios SET populacao = 654996   WHERE codigo_ibge = '5103403'; -- Cuiabá
+UPDATE municipios SET populacao = 177589   WHERE codigo_ibge = '5103205'; -- Várzea Grande
+UPDATE municipios SET populacao = 154751   WHERE codigo_ibge = '5107040'; -- Sinop
+-- Espírito Santo
+UPDATE municipios SET populacao = 365855   WHERE codigo_ibge = '3205309'; -- Vitória
+UPDATE municipios SET populacao = 406679   WHERE codigo_ibge = '3201308'; -- Cariacica
+UPDATE municipios SET populacao = 502502   WHERE codigo_ibge = '3205200'; -- Vila Velha
+UPDATE municipios SET populacao = 525587   WHERE codigo_ibge = '3205010'; -- Serra
+UPDATE municipios SET populacao = 124089   WHERE codigo_ibge = '3202405'; -- Colatina
+UPDATE municipios SET populacao = 173699   WHERE codigo_ibge = '3203320'; -- Linhares
+-- Rio Grande do Norte
+UPDATE municipios SET populacao = 890480   WHERE codigo_ibge = '2408102'; -- Natal
+UPDATE municipios SET populacao = 75735    WHERE codigo_ibge = '2401552'; -- Caicó
+UPDATE municipios SET populacao = 290389   WHERE codigo_ibge = '2408003'; -- Mossoró
+-- Paraíba
+UPDATE municipios SET populacao = 817511   WHERE codigo_ibge = '2507507'; -- João Pessoa
+UPDATE municipios SET populacao = 422567   WHERE codigo_ibge = '2504009'; -- Campina Grande
+-- Alagoas
+UPDATE municipios SET populacao = 1025360  WHERE codigo_ibge = '2704302'; -- Maceió
+UPDATE municipios SET populacao = 241358   WHERE codigo_ibge = '2702306'; -- Arapiraca
+-- Sergipe
+UPDATE municipios SET populacao = 672839   WHERE codigo_ibge = '2800308'; -- Aracaju
+-- Piauí
+UPDATE municipios SET populacao = 871126   WHERE codigo_ibge = '2211001'; -- Teresina
+-- Maranhão
+UPDATE municipios SET populacao = 1124387  WHERE codigo_ibge = '2111300'; -- São Luís
+UPDATE municipios SET populacao = 264597   WHERE codigo_ibge = '2105302'; -- Imperatriz
+-- Tocantins
+UPDATE municipios SET populacao = 313516   WHERE codigo_ibge = '1721000'; -- Palmas
+UPDATE municipios SET populacao = 185012   WHERE codigo_ibge = '1702109'; -- Araguaína
+-- Rondônia
+UPDATE municipios SET populacao = 539354   WHERE codigo_ibge = '1100205'; -- Porto Velho
+UPDATE municipios SET populacao = 130026   WHERE codigo_ibge = '1100122'; -- Ji-Paraná
+-- Acre
+UPDATE municipios SET populacao = 419452   WHERE codigo_ibge = '1200401'; -- Rio Branco
+-- Roraima
+UPDATE municipios SET populacao = 652713   WHERE codigo_ibge = '1400100'; -- Boa Vista
+-- Amapá
+UPDATE municipios SET populacao = 522555   WHERE codigo_ibge = '1600303'; -- Macapá

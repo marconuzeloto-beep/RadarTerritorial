@@ -18,8 +18,9 @@ class MunicipioRepository:
                 codigo_ibge,
                 nome,
                 uf,
-                CAST(latitude AS FLOAT) AS latitude,
-                CAST(longitude AS FLOAT) AS longitude
+                CAST(latitude AS FLOAT)  AS latitude,
+                CAST(longitude AS FLOAT) AS longitude,
+                COALESCE(populacao, 0)   AS populacao
             FROM municipios
             WHERE unaccent(lower(nome)) IN ({placeholders})
         """)
@@ -109,6 +110,92 @@ class MunicipioRepository:
 
         result = await self.db.execute(query, {"radius_m": radius_km * 1000})
         return [dict(row._mapping) for row in result.fetchall()]
+
+    async def find_within_isochrone_union(
+        self, polygon_geojsons: list[str], exclude_ids: list[int]
+    ) -> dict:
+        """
+        Receives a list of GeoJSON polygon strings (one per source city isochrone),
+        unions them with ST_Union, then finds all municipalities inside via ST_Within.
+        All spatial operations run entirely in PostGIS.
+        """
+        # Build UNION ALL CTE for all polygon strings
+        union_parts = "\n    UNION ALL\n    ".join(
+            f"SELECT ST_GeomFromGeoJSON(:{f'poly{i}'}) AS geom"
+            for i in range(len(polygon_geojsons))
+        )
+        params = {f"poly{i}": g for i, g in enumerate(polygon_geojsons)}
+
+        exclude_clause = ", ".join(str(i) for i in exclude_ids) if exclude_ids else "0"
+
+        query = text(f"""
+            WITH input_polys AS (
+                {union_parts}
+            ),
+            unioned AS (
+                SELECT ST_Union(geom) AS geom FROM input_polys
+            )
+            SELECT
+                ST_AsGeoJSON(u.geom)                       AS union_geojson,
+                ST_Area(u.geom::geography) / 1e6           AS area_km2,
+                m.id,
+                m.codigo_ibge,
+                m.nome,
+                m.uf,
+                CAST(m.latitude  AS FLOAT)                 AS latitude,
+                CAST(m.longitude AS FLOAT)                 AS longitude,
+                COALESCE(m.populacao, 0)                   AS populacao
+            FROM unioned u
+            JOIN municipios m ON ST_Within(m.geom, u.geom)
+            WHERE m.id NOT IN ({exclude_clause})
+            ORDER BY m.nome
+        """)
+
+        result = await self.db.execute(query, params)
+        rows = result.fetchall()
+
+        if not rows:
+            # Polygon exists but no cities inside — still return the polygon shape
+            union_gjson, area = await self._get_isochrone_union_only(polygon_geojsons)
+            return {"union_geojson": union_gjson, "area_km2": area, "cities": []}
+
+        import json
+        union_geojson = json.loads(rows[0]._mapping["union_geojson"])
+        area_km2      = float(rows[0]._mapping["area_km2"])
+        cities = [
+            {
+                "id":           r._mapping["id"],
+                "codigo_ibge":  r._mapping["codigo_ibge"],
+                "nome":         r._mapping["nome"],
+                "uf":           r._mapping["uf"],
+                "latitude":     r._mapping["latitude"],
+                "longitude":    r._mapping["longitude"],
+                "populacao":    r._mapping["populacao"],
+            }
+            for r in rows
+        ]
+        return {"union_geojson": union_geojson, "area_km2": area_km2, "cities": cities}
+
+    async def _get_isochrone_union_only(self, polygon_geojsons: list[str]) -> tuple:
+        union_parts = "\n    UNION ALL\n    ".join(
+            f"SELECT ST_GeomFromGeoJSON(:{f'poly{i}'}) AS geom"
+            for i in range(len(polygon_geojsons))
+        )
+        params = {f"poly{i}": g for i, g in enumerate(polygon_geojsons)}
+        query = text(f"""
+            WITH input_polys AS ({union_parts}),
+            unioned AS (SELECT ST_Union(geom) AS geom FROM input_polys)
+            SELECT
+                ST_AsGeoJSON(geom)             AS union_geojson,
+                ST_Area(geom::geography) / 1e6 AS area_km2
+            FROM unioned
+        """)
+        result = await self.db.execute(query, params)
+        row = result.fetchone()
+        if row:
+            import json
+            return json.loads(row._mapping["union_geojson"]), float(row._mapping["area_km2"])
+        return None, 0.0
 
     async def build_polygon_and_find_cities(
         self, source_ids: list[int], buffer_km: float

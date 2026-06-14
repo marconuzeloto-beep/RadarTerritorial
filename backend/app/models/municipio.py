@@ -13,3 +13,4 @@ class Municipio(Base):
     latitude = Column(Numeric(10, 7), nullable=False)
     longitude = Column(Numeric(10, 7), nullable=False)
     geom = Column(Geometry("POINT", srid=4326), nullable=False)
+    populacao = Column(Integer, nullable=True)
